@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jackpot Estimator</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #0033a0, #d70000); /* PCSO blue → red */
+  margin: 0;
+  padding: 20px;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+.container {
+  background: rgba(0,0,0,0.5);
+  padding: 20px 25px;
+  border-radius: 20px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+  backdrop-filter: blur(10px);
+}
+.logo-section {
+  text-align: center;
+  margin-bottom: 15px;
+}
+.logo-section img {
+  max-width: 120px;
+  margin-bottom: 10px;
+}
+.game-logos {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+.game-logos img {
+  max-width: 60px;
+}
+h1 {
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+  color: #fff;
+}
+label {
+  font-size: 1rem;
+  margin-top: 10px;
+  display: block;
+  color: #fff;
+}
+select, input[type=text] {
+  width: 100%;
+  padding: 12px;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  border: none;
+  font-size: 1.1rem;
+  box-sizing: border-box;
+}
+button {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background-color: #ffde00; /* PCSO yellow */
+  color: black;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+button:hover {
+  background-color: #e6c200;
+}
+.result {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+  text-align: center;
+  font-size: 1.3rem;
+  min-height: 50px;
+  color: #fff;
+}
+.disclaimer, .maker {
+  font-size: 0.8rem;
+  margin-top: 15px;
+  opacity: 0.8;
+  text-align: center;
+  color: #fff;
+}
+.maker {
+  margin-top: 5px;
+  font-style: italic;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- PCSO Logo & Hub -->
+  <div class="logo-section">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/d/d1/Philippine_Charity_Sweepstakes_Office_%28PCSO%29.svg" alt="PCSO Logo">
+    <h1>PCSO Games Online Hub</h1>
+    <div class="game-logos">
+      <img src="https://www.pcso.gov.ph/pcsofiles/Games/658.png" alt="UltraLotto 6/58">
+      <img src="https://www.pcso.gov.ph/pcsofiles/Games/655.png" alt="GrandLotto 6/55">
+      <img src="https://www.pcso.gov.ph/pcsofiles/Games/649.png" alt="SuperLotto 6/49">
+      <img src="https://www.pcso.gov.ph/pcsofiles/Games/645.png" alt="MegaLotto 6/45">
+      <img src="https://www.pcso.gov.ph/pcsofiles/Games/642.png" alt="Lotto 6/42">
+    </div>
+  </div>
+
+  <!-- Game Selection -->
+  <label for="game">Select Game</label>
+  <select id="game" aria-label="Select Lottery Game">
+    <option value="ultralotto">UltraLotto 6/58</option>
+    <option value="grandlotto">GrandLotto 6/55</option>
+    <option value="superlotto">SuperLotto 6/49</option>
+    <option value="megalotto">MegaLotto 6/45</option>
+    <option value="lotto">Lotto 6/42</option>
+  </select>
+
+  <!-- Inputs -->
+  <label for="carryOver">Carry Over Amount (₱)</label>
+  <input type="text" id="carryOver" placeholder="Enter carry over amount" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+
+  <label for="currentAllocation">Current Draw Allocation (₱)</label>
+  <input type="text" id="currentAllocation" placeholder="Enter current allocation" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+
+  <button onclick="estimateJackpot()">Compute Estimate</button>
+
+  <!-- Result & Footer -->
+  <div class="result" id="result">Estimated Jackpot: ₱0.00</div>
+  <div class="disclaimer">
+    * Minimum jackpots apply before snowballing starts.<br>
+    * This is an estimate only, not official.
+  </div>
+  <div class="maker">
+    &copy; 2026 Tyrone Jake A. Nuique — Maker & Owner of Jackpot Estimator Tool
+  </div>
+</div>
+
+<script>
+const minimumJackpots = {
+  ultralotto: 75000000,
+  grandlotto: 45000000,
+  superlotto: 25000000,
+  megalotto: 15000000,
+  lotto: 10000000
+};
+
+// Format input with commas and support dictation
+function formatNumberInput(input) {
+  let value = input.value.replace(/,/g,'').replace(/\D/g,'');
+  if(!value) return input.value='';
+  input.value = parseFloat(value).toLocaleString('en-PH', {maximumFractionDigits:0});
+}
+document.getElementById('carryOver').addEventListener('input', function(){ formatNumberInput(this); });
+document.getElementById('currentAllocation').addEventListener('input', function(){ formatNumberInput(this); });
+
+function estimateJackpot() {
+  const game = document.getElementById('game').value;
+  const carryOver = parseFloat(document.getElementById('carryOver').value.replace(/,/g,'')) || 0;
+  const currentAllocation = parseFloat(document.getElementById('currentAllocation').value.replace(/,/g,'')) || 0;
+
+  const minJackpot = minimumJackpots[game];
+  const total = carryOver + currentAllocation;
+
+  let estimated;
+  if(total < minJackpot){
+    estimated = minJackpot;
+  } else {
+    estimated = Math.floor(total / 500000) * 500000;
+  }
+
+  document.getElementById('result').textContent =
+    "Estimated Jackpot: ₱" + estimated.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+</script>
+</body>
+</html>
